@@ -2,6 +2,7 @@
 <html>
   <head>
     <script src="https://unpkg.com/konva@4.2.2/konva.min.js"></script>
+	<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <meta charset="utf-8" />
     <title>1812 Invasion of Canada</title>
     <style>
@@ -16,14 +17,22 @@
   <body>
     <div id="container"></div>
     <script>
-	  var xscale = screen.width / 1920;
+
 	  var jsonConfig;
 	  var objectId = 0;
+	  var socket = io();
+	  var piecesLayer;
+	  
+	  var actualWidth = 1920;
+	  var actualHeight = 1080;
+	  
+	  var xscale = window.innerWidth / actualWidth;
+	  var yscale = window.innerHeight / actualHeight;
 	
 	  function loadJSON(callback) {   
 	    var xobj = new XMLHttpRequest();
 	    xobj.overrideMimeType("application/json");
-	    xobj.open('GET', 'http://localhost:3000/load_images_at_start', true);
+	    xobj.open('GET', 'load_images_at_start', true);
 	    xobj.onreadystatechange = function () {
 		  if (xobj.readyState == 4 && xobj.status == "200") {
 		    callback(JSON.parse(xobj.responseText));
@@ -33,6 +42,27 @@
       }
 	  
 	  var images = {};
+	  
+	  function fUpdateKnodePos(iNodeID, iX, iY) {
+		
+		var oNode = piecesLayer.getChildren(function(node){
+		   return node.id() === iNodeID;
+		}).toArray()[0];
+		
+		oNode.x(iX);
+		oNode.y(iY);
+		piecesLayer.draw();
+	  }
+	  
+      socket.on('dragKnode', function(data){
+	  
+		var nodeID = data.nodeID;
+		var x = data.x;
+		var y = data.y;
+		
+	    fUpdateKnodePos(nodeID, x, y);
+      });
+	  
 	  
       var func_dragStart = function(e) {
 		
@@ -68,6 +98,14 @@
 		{
           oKimg.on('click', func_nodeTopMostAndSelected);
           oKimg.on('dragstart', func_dragStart);
+		  
+          oKimg.on('dragmove', function(e) {
+            var oNode = e.target;
+            socket.emit('dragKnode', { nodeID: oNode.id(),
+                                       x: oNode.x(),
+                                       y: oNode.y()}
+            );
+          });
 		}
 		
 		return;
@@ -75,15 +113,24 @@
 	  
 	  function fnInitStage()
 	  {
+
         var stage = new Konva.Stage({
           container: 'container',
-          width: 1920,
-          height: 1080
+          width: window.innerWidth,
+          height: window.innerHeight
         });
 		
 		//var bgLayer = new Konva.Layer();
         var mapLayer = new Konva.Layer();
-		var piecesLayer = new Konva.Layer();
+		piecesLayer = new Konva.Layer();
+		
+		//mapLayer.scale({ x: xscale, y: yscale });
+		//piecesLayer.scale({ x: xscale, y: yscale });
+		
+		//mapLayer.scalex(xscale);
+		//mapLayer.scaley(yscale);
+		//piecesLayer.scalex(xscale);
+		//piecesLayer.scaley(yscale);
 
 		fnInstantiateImg('map_1920', mapLayer, 0, 0, false);
 		
@@ -105,11 +152,15 @@
         stage.add(mapLayer);
 		stage.add(piecesLayer);
 		
+		stage.scale({ x: xscale, y: xscale });
+		
 		//var context = bgLayer.getContext();
         //context.setAttr('font', '20pt Calibri');
         //context.setAttr('textAlign', 'center');
         //context.setAttr('fillStyle', 'white');
-
+		
+		mapLayer.draw();
+		piecesLayer.draw();
 	  }
 	
       function loadImages(json) {

@@ -14,20 +14,20 @@ app.get('/load_images_at_start', function(req, res){
   res.sendFile(__dirname + '/load_images_at_start.json');
 });
 
-//io.on('connection', function(socket){
-//  socket.on('instantiateCard', function(data){
-//	  
-//    socket.broadcast.emit('instantiateCard',  { nodeID: data.nodeID, 
-//	                              cardKey: data.cardKey  });
-//  });
-//  
-//  socket.on('dragKnode', function(data){
-//	
-//    socket.broadcast.emit('dragKnode',  { nodeID: data.nodeID,
-//								x: data.x,
-//								y: data.y});
-//  });
-//});
+io.on('connection', function(socket){
+  //socket.on('instantiateCard', function(data){
+  //  
+  //  socket.broadcast.emit('instantiateCard',  { nodeID: data.nodeID, 
+  //	                              cardKey: data.cardKey  });
+  //});
+ 
+ socket.on('dragKnode', function(data){
+	
+   socket.broadcast.emit('dragKnode',  { nodeID: data.nodeID,
+								x: data.x,
+								y: data.y});
+ });
+});
 
 http.listen(port, function(){
   console.log('listening on *:' + port);
