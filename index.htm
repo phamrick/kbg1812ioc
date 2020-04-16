@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://unpkg.com/konva@4.2.2/konva.min.js"></script>
+    <meta charset="utf-8" />
+    <title>1812 Invasion of Canada</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #f0f0f0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container"></div>
+    <script>
+	  var xscale = screen.width / 1920;
+	  var jsonConfig;
+	  var objectId = 0;
+	
+	  function loadJSON(callback) {   
+	    var xobj = new XMLHttpRequest();
+	    xobj.overrideMimeType("application/json");
+	    xobj.open('GET', 'http://localhost:3000/load_images_at_start', true);
+	    xobj.onreadystatechange = function () {
+		  if (xobj.readyState == 4 && xobj.status == "200") {
+		    callback(JSON.parse(xobj.responseText));
+		  }
+	    };
+	    xobj.send(null);  
+      }
+	  
+	  var images = {};
+	  
+      var func_dragStart = function(e) {
+		
+        var draggedObj = e.target;
+        draggedObj.moveToTop();
+        draggedObj.getLayer().draw();
+      };
+		
+      var func_nodeTopMostAndSelected = function(e) {
+					
+        var oNode = e.target;
+        oNode.moveToTop();
+        oNode.getLayer().draw();
+        //selectedNode = oNode;
+      };
+	  
+	  function fnInstantiateImg(iImgKey, iLayer, iX, iY, iDraggable)
+	  {
+		objectId++;
+	  
+        var oKimg = new Konva.Image({
+            image: images[iImgKey],
+            x: parseInt(iX),
+            y: parseInt(iY),
+			id: objectId.toString(),
+			draggable: iDraggable
+        });
+			
+        iLayer.add(oKimg);
+        iLayer.draw();
+		
+		if (iDraggable)
+		{
+          oKimg.on('click', func_nodeTopMostAndSelected);
+          oKimg.on('dragstart', func_dragStart);
+		}
+		
+		return;
+	  }
+	  
+	  function fnInitStage()
+	  {
+        var stage = new Konva.Stage({
+          container: 'container',
+          width: 1920,
+          height: 1080
+        });
+		
+		//var bgLayer = new Konva.Layer();
+        var mapLayer = new Konva.Layer();
+		var piecesLayer = new Konva.Layer();
+
+		fnInstantiateImg('map_1920', mapLayer, 0, 0, false);
+		
+		for(var cubesKey in jsonConfig.cubes)
+		{
+		  var cubesVal = jsonConfig.cubes[cubesKey];
+		  var srcKey = cubesVal.srcKey;
+		  var insts = cubesVal.instances;
+		  
+          var index = 0; 
+          while (index < insts.length) { 
+            var inst = insts[index];
+			fnInstantiateImg(srcKey, piecesLayer, inst.x, inst.y, true);
+            index++; 
+          }
+		}
+
+		//stage.add(bgLayer);
+        stage.add(mapLayer);
+		stage.add(piecesLayer);
+		
+		//var context = bgLayer.getContext();
+        //context.setAttr('font', '20pt Calibri');
+        //context.setAttr('textAlign', 'center');
+        //context.setAttr('fillStyle', 'white');
+
+	  }
+	
+      function loadImages(json) {
+	    
+		jsonConfig = json;
+        var loadedImages = 0;
+        var numImages = 0;
+		var imgSources = jsonConfig.imageSources
+        for (var src in imgSources) {
+          numImages++;
+        }
+        for (var src in imgSources) {
+          images[src] = new Image();
+          images[src].onload = function() {
+            if (++loadedImages >= numImages) {
+              fnInitStage();
+            }
+          };
+          //images[src].src = assetDir + sources[src];
+		  images[src].src = imgSources[src];
+        }
+      }
+	  
+      loadJSON(loadImages);
+	
+    </script>
+  </body>
+</html>
+

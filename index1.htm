@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://unpkg.com/konva@4.2.2/konva.min.js"></script>
+    <meta charset="utf-8" />
+    <title>1812 Invasion of Canada</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #f0f0f0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container"></div>
+    <script>
+
+	  var images = {};
+	  
+      var func_dragStart = function(e) {
+		
+        var draggedObj = e.target;
+        draggedObj.moveToTop();
+        draggedObj.getLayer().draw();
+      };
+		
+      var func_nodeTopMostAndSelected = function(e) {
+					
+        var oNode = e.target;
+        oNode.moveToTop();
+        oNode.getLayer().draw();
+        //selectedNode = oNode;
+      };
+	  
+	  function fnInstantiateImg(iImgKey, iLayer, iX, iY, iID, iDraggable)
+	  {
+        var oKimg = new Konva.Image({
+            image: images[iImgKey],
+            x: iX,
+            y: iY,
+			id: iID,
+			draggable: true
+        });
+			
+        iLayer.add(oKimg);
+        iLayer.draw();
+		
+		if (iDraggable)
+		{
+          oKimg.on('click', func_nodeTopMostAndSelected);
+          oKimg.on('dragstart', func_dragStart);
+		}
+		
+		return;
+	  }
+	  
+	  function fnInitStage()
+	  {
+        var stage = new Konva.Stage({
+          container: 'container',
+          width: 1920,
+          height: 1080
+        });
+		
+		//var bgLayer = new Konva.Layer();
+        var mapLayer = new Konva.Layer();
+		var piecesLayer = new Konva.Layer();
+
+		fnInstantiateImg('map_1920', mapLayer, 0, 0, "10000", false);
+		fnInstantiateImg('cube_white', piecesLayer, "453", "803", '0008', true);
+
+		//stage.add(bgLayer);
+        stage.add(mapLayer);
+		stage.add(piecesLayer);
+		
+		//var context = bgLayer.getContext();
+        //context.setAttr('font', '20pt Calibri');
+        //context.setAttr('textAlign', 'center');
+        //context.setAttr('fillStyle', 'white');
+
+	  }
+	
+      var imageSources = {
+  
+	    "map_1920" 		: "map_1920.jpg",
+	    "cube_white" 	: "cube_white.png",
+	    "cube_yellow" 	: "cube_yellow.png",
+	    "cube_blue" 	: "cube_blue.png",
+	    "cube_green" 	: "cube_green.png",
+	    "cube_orange" 	: "cube_orange.png",
+	    "cube_red" 		: "cube_red.png"
+   
+      };
+	
+      function loadImages() {
+	    
+        var loadedImages = 0;
+        var numImages = 0;
+		var imgSources = imageSources
+        for (var src in imgSources) {
+          numImages++;
+        }
+        for (var src in imgSources) {
+          images[src] = new Image();
+          images[src].onload = function() {
+            if (++loadedImages >= numImages) {
+              fnInitStage();
+            }
+          };
+          //images[src].src = assetDir + sources[src];
+		  images[src].src = 'images/' + imgSources[src];
+        }
+      }
+	  
+      loadImages();
+	
+    </script>
+  </body>
+</html>
+
